@@ -1,0 +1,47 @@
+[project]
+name = "pdf-ocr"
+version = "0.1.0"
+description = "PDF to parquet with dots.ocr: layout blocks, categories, boxes and text"
+requires-python = "==3.12.*"
+dependencies = [
+    # Pinned exactly. See docs/INSTALL.md before changing any of these three —
+    # they are a set, not three independent choices.
+    "torch==2.7.0+cu128",
+    "torchvision==0.22.0+cu128",
+    "vllm==0.9.1",            # last release shipping vllm.model_executor.layers.sampler
+    "transformers==4.51.3",   # 5.x breaks DotsOCR: "aimv2 is already used by a Transformers config"
+    "tokenizers==0.21.4",
+    "xformers==0.0.30",
+    "numpy==2.2.6",
+    "pillow==12.1.1",
+    "pymupdf>=1.24",          # PDF rasterisation
+    "pandas>=2.2",
+    "pyarrow>=16",
+    # Required: without it start-up runs out of memory. Official prebuilt wheel;
+    # must match torch 2.7, CUDA 12 and torch's C++ ABI.
+    "flash-attn @ https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.7cxx11abiTRUE-cp312-cp312-linux_x86_64.whl ; sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+
+[project.scripts]
+pdf-ocr = "pdf_ocr.cli:main"
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+# flash-attn is pinned by URL (the official prebuilt wheel); hatchling refuses
+# that unless told to.
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pdf_ocr"]
